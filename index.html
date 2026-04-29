@@ -386,8 +386,8 @@
   <!-- ══ SPLASH ══ -->
   <div class="screen active" id="s-splash">
     <div class="content">
-      <img class="sz-logo splash-logo" src="https://i.ibb.co/JWHjn9gz/Somos-Zeta-Exportar-Mesa-de-trabajo-1-copia-54.png" alt="Somos Zeta" style="width: 75px; height: 75px">
-      <div class="splash-title" style="width:600px;letter-spacing:-4px;text-align:center">¿QUÉ <em>IA</em> SOS?</div>
+      <img class="sz-logo splash-logo" src="https://i.ibb.co/JWHjn9gz/Somos-Zeta-Exportar-Mesa-de-trabajo-1-copia-54.png" alt="Somos Zeta" style="width: 150px; height: 150px">
+      <div class="splash-title" style="width: 600px; letter-spacing: 0px; text-align: center; line-height: 1.2">¿QUÉ<br><em style="font-size: 90px; line-height: 1">IA</em><br>SOS?</div>
       <div class="splash-sub" style="text-align: center">8 preguntas · 6 herramientas<br>Tu perfil digital, revelado.</div>
       <div class="pills" style="text-align: center; align-items: center; justify-content: center">
         <span class="pill">ChatGPT</span>
@@ -428,7 +428,7 @@
   <div class="screen" id="s-instagram">
     <div class="content">
       <div class="sz-eyebrow">Paso 2 de 2</div>
-      <div class="screen-heading">Seguinos<br>en Insta</div>
+      <div class="screen-heading">Seguinos<br>en Instagram</div>
       <div class="screen-sub">Para activar el juego, seguinos primero</div>
       <div class="insta-card">
         <div class="insta-icon-wrap">📱</div>
@@ -481,7 +481,7 @@
     <div class="content" style="text-align:center;">
       <div class="sz-eyebrow">¿Ganaste el premio extra?</div>
       <div class="wheel-title">Girá y descubrí</div>
-      <div class="wheel-wrap">
+      <div class="wheel-wrap" style="width: 320px; height: 320px">
         <div class="wheel-pointer"></div>
         <canvas id="wheel" width="320" height="320" style="width: 420px"></canvas>
       </div>
@@ -615,7 +615,7 @@ const state = { nombre:'', apellido:'', email:'', qIndex:0, scores:{}, result:nu
 const QUESTIONS = [
   { text:"¿Cómo empezás un proyecto nuevo?", opts:[
     {t:"Con ideas desordenadas, después las ordeno",    s:{claude:1,notebooklm:1}},
-    {t:"Busco qué hicieron otros antes",               s:{perplexity:2}},
+    {t:"Busco plantillas y referencias online",               s:{perplexity:2}},
     {t:"Hablo con el equipo primero",                  s:{copilot:1,gemini:1}},
     {t:"Armo un plan de tareas concreto de entrada",   s:{chatgpt:2}},
   ]},
