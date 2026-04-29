@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>¿Qué IA Sos? — Somos Zeta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:      #0E0612;
+      --bg:       #1A0F22;
+      --bg-deep:  #120A1A;
+      --bg-card:  #2F1E42;
+      --bg-card2: #241633;
+      --purple:   #6B2E9E;
+      --purple-hi:#8B3ECE;
+      --lilac:    #B89ED9;
+      --lilac-dim:#7A6490;
+      --teal:     #1E8FB5;
+      --fuchsia:  #D946A8;
+      --white:    #FFFFFF;
+      --fg-dim:   rgba(255,255,255,0.38);
+      --fg-mid:   rgba(255,255,255,0.6);
+      --border:   rgba(255,255,255,0.07);
+      --border-hi:rgba(255,255,255,0.14);
+      --shadow-sm: 0 2px 12px rgba(14,6,18,0.5);
+      --shadow-md: 0 8px 32px rgba(14,6,18,0.6);
+      --shadow-lg: 0 16px 56px rgba(14,6,18,0.7);
+      --ease-std:  cubic-bezier(0.4,0,0.2,1);
+      --ease-bounce: cubic-bezier(0.34,1.56,0.64,1);
+      --font-head: 'Montserrat', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { width:100%; height:100%; overflow:hidden; background:var(--bg-deep); font-family:var(--font-body); color:var(--white); }
+
+    /* ── CANVAS BG ── */
+    #circuit-canvas {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:0;
+    }
+
+    /* ── APP ── */
+    #app { width:100%; height:100dvh; position:relative; overflow:hidden; }
+
+    /* ── SCREENS ── */
+    .screen {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:28px 22px;
+      opacity:0; pointer-events:none;
+      transition: opacity 0.38s var(--ease-std), transform 0.38s var(--ease-std);
+      transform: translateY(16px) scale(0.98);
+      overflow-y:auto; overflow-x:hidden;
+    }
+    .screen.active  { opacity:1; pointer-events:all; transform:translateY(0) scale(1); }
+    .screen.exit    { opacity:0; transform:translateY(-16px) scale(0.98); }
+    .screen::-webkit-scrollbar { display:none; }
+    .screen { scrollbar-width:none; }
+
+    /* ── CONTENT ── */
+    .content {
+      position:relative; z-index:1;
+      width:100%; max-width:400px;
+      display:flex; flex-direction:column; align-items:center;
+    }
+
+    /* ── LOGO ── */
+    .sz-logo { height:28px; margin-bottom:20px; object-fit:contain; }
+    .sz-logo.splash-logo { height:52px; margin-bottom:24px; }
+    .sz-eyebrow {
+      font-family:var(--font-head); font-size:9px; font-weight:700;
+      letter-spacing:3.5px; text-transform:uppercase;
+      color:var(--lilac-dim); margin-bottom:10px; text-align:center;
+    }
+
+    /* ── SPLASH ── */
+    .splash-title {
+      font-family:var(--font-head); font-size:76px; font-weight:900;
+      line-height:0.88; text-align:left; letter-spacing:-3px;
+      text-transform:uppercase; color:var(--white); margin-bottom:6px; width:100%;
+    }
+    .splash-title em { font-style:normal; color:var(--lilac); }
+    .splash-sub {
+      font-size:14px; color:var(--fg-dim); text-align:left;
+      line-height:1.65; margin:16px 0 24px; font-weight:400;
+      max-width:300px;
+    }
+    .pills {
+      display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-start;
+      margin-bottom:28px; width:100%;
+    }
+    .pill {
+      padding:5px 13px;
+      background:rgba(107,46,158,0.15);
+      border:1px solid rgba(107,46,158,0.4);
+      border-radius:999px;
+      font-size:11px; font-weight:600; letter-spacing:0.5px;
+      color:var(--lilac); font-family:var(--font-body);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .pill:hover { background:rgba(107,46,158,0.3); }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      width:100%; padding:17px 24px;
+      background:var(--purple);
+      color:var(--white);
+      border:none; border-radius:999px;
+      font-family:var(--font-head); font-size:15px; font-weight:800;
+      letter-spacing:1.5px; text-transform:uppercase;
+      cursor:pointer;
+      transition: background 0.2s var(--ease-std), transform 0.12s, box-shadow 0.2s;
+      margin-top:14px; position:relative; overflow:hidden;
+      box-shadow: 0 4px 20px rgba(107,46,158,0.45);
+    }
+    .btn-primary:hover  { background:var(--purple-hi); transform:translateY(-1px); box-shadow:0 6px 28px rgba(107,46,158,0.55); }
+    .btn-primary:active { transform:scale(0.98); background:#5a2585; }
+
+    .btn-secondary {
+      width:100%; padding:14px 24px;
+      background:transparent;
+      color:var(--lilac);
+      border:1px solid rgba(184,158,217,0.3);
+      border-radius:999px;
+      font-family:var(--font-body); font-size:14px; font-weight:500;
+      cursor:pointer;
+      transition: all 0.2s;
+      margin-top:10px;
+    }
+    .btn-secondary:hover  { background:rgba(184,158,217,0.08); border-color:rgba(184,158,217,0.5); }
+    .btn-secondary:active { background:rgba(107,46,158,0.15); }
+
+    /* ── CARD ── */
+    .card {
+      width:100%; background:var(--bg-card);
+      border:1px solid var(--border); border-radius:20px;
+      padding:24px; box-shadow:var(--shadow-md);
+    }
+
+    /* ── SCREEN HEADINGS ── */
+    .screen-heading {
+      font-family:var(--font-head); font-size:40px; font-weight:900;
+      text-transform:uppercase; line-height:0.92; text-align:center;
+      margin-bottom:6px;
+    }
+    .screen-sub {
+      font-size:13px; color:var(--fg-dim); text-align:center;
+      margin-bottom:22px; line-height:1.55;
+    }
+
+    /* ── FORM ── */
+    .form-group { width:100%; margin-bottom:11px; }
+    .form-group label {
+      display:block; font-size:9px; font-weight:700;
+      letter-spacing:2.5px; text-transform:uppercase;
+      color:var(--lilac-dim); margin-bottom:6px;
+    }
+    .form-group input {
+      width:100%; padding:14px 16px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(107,46,158,0.3);
+      border-radius:14px; color:var(--white);
+      font-family:var(--font-body); font-size:16px;
+      outline:none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus {
+      border-color:var(--purple);
+      background:rgba(107,46,158,0.08);
+      box-shadow:0 0 0 3px rgba(184,158,217,0.15);
+    }
+    .form-group input::placeholder { color:rgba(255,255,255,0.18); }
+    .error-msg { color:var(--fuchsia); font-size:12px; margin-top:10px; text-align:center; display:none; font-weight:500; }
+
+    /* ── INSTAGRAM BOX ── */
+    .insta-card {
+      width:100%; background:rgba(107,46,158,0.12);
+      border:1px solid rgba(107,46,158,0.35); border-radius:20px;
+      padding:28px 20px; text-align:center; margin:16px 0;
+    }
+    .insta-handle {
+      font-family:var(--font-head); font-size:28px; font-weight:900;
+      color:var(--lilac); letter-spacing:1px; margin:10px 0 8px;
+    }
+    .insta-note { font-size:13px; color:var(--fg-dim); line-height:1.55; }
+    .insta-icon-wrap {
+      width:56px; height:56px; border-radius:16px; margin:0 auto 10px;
+      background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+      display:flex; align-items:center; justify-content:center;
+      font-size:28px;
+    }
+
+    /* ── QUIZ ── */
+    #s-quiz .content { max-width:520px; }
+    .q-meta { width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .q-counter { font-size:12px; font-weight:800; letter-spacing:2.5px; text-transform:uppercase; color:var(--lilac); text-shadow:0 0 20px rgba(184,158,217,0.4); }
+    .progress-bar { width:100%; height:3px; background:rgba(255,255,255,0.08); border-radius:999px; margin-bottom:24px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--lilac)); border-radius:999px; transition:width 0.5s var(--ease-std); }
+    .q-text {
+      font-family:var(--font-head); font-size:32px; font-weight:900;
+      line-height:1.08; color:var(--white); margin-bottom:22px;
+      text-align:left; width:100%;
+      animation: fadeSlideUp 0.3s var(--ease-std) both;
+    }
+    .options-list { width:100%; display:flex; flex-direction:column; gap:9px; }
+    .option-btn {
+      width:100%; padding:14px 16px;
+      background:rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius:16px;
+      color:var(--white); font-family:var(--font-body); font-size:14px;
+      font-weight:400; text-align:left; cursor:pointer;
+      transition: all 0.18s var(--ease-std);
+      display:flex; align-items:center; gap:12px; line-height:1.4;
+      animation: fadeSlideUp 0.3s var(--ease-std) both;
+    }
+    .option-btn:nth-child(1){animation-delay:0.05s}
+    .option-btn:nth-child(2){animation-delay:0.1s}
+    .option-btn:nth-child(3){animation-delay:0.15s}
+    .option-btn:nth-child(4){animation-delay:0.2s}
+    .option-btn:hover:not(:disabled) { background:rgba(107,46,158,0.18); border-color:rgba(107,46,158,0.5); transform:translateX(3px); }
+    .option-btn:active:not(:disabled) { transform:scale(0.98); }
+    .option-btn.selected { background:rgba(107,46,158,0.25); border-color:var(--purple); box-shadow:0 0 0 2px rgba(107,46,158,0.3); }
+    .option-btn:disabled { opacity:0.45; cursor:default; }
+    .opt-letter {
+      width:28px; height:28px; min-width:28px; border-radius:50%;
+      background:rgba(107,46,158,0.25);
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--font-head); font-weight:800; font-size:12px;
+      color:var(--lilac); flex-shrink:0;
+      transition: background 0.2s;
+    }
+    .option-btn.selected .opt-letter { background:var(--purple); color:var(--white); }
+
+    /* ── LOADING ── */
+    .loading-z {
+      font-family:var(--font-head); font-size:88px; font-weight:900;
+      color:var(--purple); line-height:1;
+      animation: zPulse 1.2s var(--ease-std) infinite alternate;
+      text-shadow: 0 0 60px rgba(107,46,158,0.6), 0 0 120px rgba(107,46,158,0.3);
+    }
+    @keyframes zPulse {
+      from { transform:scale(1) rotate(-2deg); text-shadow:0 0 40px rgba(107,46,158,0.5); }
+      to   { transform:scale(1.08) rotate(2deg); text-shadow:0 0 80px rgba(184,158,217,0.8); }
+    }
+    .loading-label {
+      font-family:var(--font-head); font-size:11px; font-weight:700;
+      letter-spacing:4px; text-transform:uppercase;
+      color:var(--lilac-dim); margin-top:20px; margin-bottom:6px;
+    }
+    .loading-title {
+      font-family:var(--font-head); font-size:36px; font-weight:900;
+      text-transform:uppercase; text-align:center; line-height:0.95; color:var(--white);
+    }
+    .loading-dots { display:flex; gap:8px; margin-top:20px; }
+    .loading-dots span {
+      width:9px; height:9px; background:var(--purple); border-radius:50%;
+      animation:dotBounce 0.85s ease infinite;
+    }
+    .loading-dots span:nth-child(2){animation-delay:0.17s}
+    .loading-dots span:nth-child(3){animation-delay:0.34s}
+    @keyframes dotBounce {
+      0%,100%{transform:translateY(0);opacity:0.25}
+      50%{transform:translateY(-12px);opacity:1}
+    }
+
+    /* ── RESULT ── */
+    .result-eyebrow { font-size:9px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--fg-dim); margin-bottom:14px; }
+    .result-sticker {
+      width:120px; height:120px; object-fit:contain;
+      filter:drop-shadow(2px 6px 16px rgba(14,6,18,0.7));
+      animation:stickerIn 0.6s var(--ease-bounce) both;
+      margin-bottom:10px;
+    }
+    @keyframes stickerIn {
+      from{transform:scale(0.4) rotate(-8deg);opacity:0}
+      to{transform:scale(1) rotate(0deg);opacity:1}
+    }
+    .result-sticker:hover { transform:rotate(-3deg) scale(1.05); transition:transform 0.42s var(--ease-bounce); }
+    .result-tool {
+      font-family:var(--font-head); font-size:54px; font-weight:900;
+      text-transform:uppercase; line-height:0.88; text-align:center;
+      transition:color 0.3s;
+    }
+    .result-nick {
+      font-family:var(--font-head); font-size:14px; font-weight:700;
+      text-transform:uppercase; color:var(--lilac); letter-spacing:2px;
+      margin:8px 0 12px;
+    }
+    .divider { width:36px; height:2px; background:var(--purple); margin:0 auto 14px; border-radius:2px; }
+    .result-desc { font-size:14px; line-height:1.7; color:var(--fg-mid); text-align:center; margin-bottom:6px; }
+
+    /* ── WHEEL ── */
+    .wheel-title {
+      font-family:var(--font-head); font-size:34px; font-weight:900;
+      text-transform:uppercase; margin-bottom:20px; text-align:center;
+    }
+    .wheel-wrap { position:relative; display:flex; align-items:center; justify-content:center; }
+    .wheel-pointer {
+      position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+      width:0; height:0;
+      border-left:12px solid transparent; border-right:12px solid transparent;
+      border-top:24px solid var(--fuchsia);
+      filter:drop-shadow(0 0 10px var(--fuchsia)); z-index:10;
+    }
+    canvas#wheel {
+      border-radius:50%;
+      box-shadow:
+        0 0 0 4px rgba(107,46,158,0.5),
+        0 0 0 8px rgba(107,46,158,0.15),
+        0 0 70px rgba(107,46,158,0.55),
+        0 0 140px rgba(184,158,217,0.2);
+      display:block;
+      animation: wheelGlow 2.5s ease-in-out infinite alternate;
+    }
+    @keyframes wheelGlow {
+      from { box-shadow: 0 0 0 4px rgba(107,46,158,0.5), 0 0 0 8px rgba(107,46,158,0.15), 0 0 60px rgba(107,46,158,0.5), 0 0 120px rgba(184,158,217,0.15); }
+      to   { box-shadow: 0 0 0 4px rgba(217,70,168,0.6), 0 0 0 10px rgba(217,70,168,0.12), 0 0 90px rgba(217,70,168,0.5), 0 0 180px rgba(217,70,168,0.2); }
+    }
+    canvas#wheel.spinning {
+      animation: none;
+      box-shadow: 0 0 0 4px rgba(255,215,0,0.6), 0 0 0 10px rgba(255,215,0,0.12), 0 0 100px rgba(255,215,0,0.5), 0 0 200px rgba(255,215,0,0.2);
+    }
+    .spin-btn {
+      margin-top:22px; padding:16px 48px;
+      background:linear-gradient(135deg,var(--purple),var(--fuchsia));
+      color:var(--white); border:none; border-radius:999px;
+      font-family:var(--font-head); font-size:18px; font-weight:800;
+      letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
+      transition:opacity 0.2s, transform 0.12s;
+      box-shadow:0 4px 24px rgba(217,70,168,0.4);
+    }
+    .spin-btn:hover  { opacity:0.9; transform:translateY(-1px); }
+    .spin-btn:active { transform:scale(0.97); }
+    .spin-btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+    /* ── WIN / STICKER SCREENS ── */
+    .win-sticker {
+      width:100px; height:100px; object-fit:contain;
+      filter:drop-shadow(2px 6px 16px rgba(14,6,18,0.6));
+      animation:stickerIn 0.6s var(--ease-bounce) both, iconPulse 2s ease infinite alternate 0.8s;
+      margin-bottom:10px;
+    }
+    @keyframes iconPulse { from{transform:scale(1)} to{transform:scale(1.07)} }
+    .win-title {
+      font-family:var(--font-head); font-size:52px; font-weight:900;
+      text-transform:uppercase; line-height:0.88; text-align:center;
+    }
+    .win-title.gold   { color:#FFD700; text-shadow:0 0 50px rgba(255,215,0,0.5); }
+    .win-title.purple { color:var(--lilac); }
+    .win-sub { font-size:14px; color:var(--fg-mid); text-align:center; margin-top:14px; line-height:1.65; }
+    .claim-card { width:100%; border-radius:20px; padding:20px; text-align:center; margin:18px 0; }
+    .claim-card.gold   { background:rgba(255,215,0,0.07); border:2px solid rgba(255,215,0,0.5); }
+    .claim-card.violet { background:rgba(107,46,158,0.15); border:1px solid rgba(107,46,158,0.5); }
+    .claim-name { font-family:var(--font-head); font-size:20px; font-weight:800; text-transform:uppercase; }
+    .claim-meta { font-size:13px; color:var(--fg-dim); margin-top:5px; }
+
+    /* ── FOOTER ── */
+    .brand-footer {
+      position:fixed; bottom:12px; left:0; right:0;
+      text-align:center; font-size:9px; font-weight:600;
+      letter-spacing:2px; text-transform:uppercase;
+      color:rgba(255,255,255,0.09); z-index:1; pointer-events:none;
+      font-family:var(--font-head);
+    }
+
+    /* ── CONFETTI ── */
+    #confetti { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:100; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeSlideUp {
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="circuit-canvas"></canvas>
+<canvas id="confetti"></canvas>
+
+<div id="app">
+
+  <!-- ══ SPLASH ══ -->
+  <div class="screen active" id="s-splash">
+    <div class="content">
+      <img class="sz-logo splash-logo" src="https://i.ibb.co/JWHjn9gz/Somos-Zeta-Exportar-Mesa-de-trabajo-1-copia-54.png" alt="Somos Zeta" style="width: 75px; height: 75px">
+      <div class="splash-title" style="width:600px;letter-spacing:-4px;text-align:center">¿QUÉ <em>IA</em> SOS?</div>
+      <div class="splash-sub" style="text-align: center">8 preguntas · 6 herramientas<br>Tu perfil digital, revelado.</div>
+      <div class="pills" style="text-align: center; align-items: center; justify-content: center">
+        <span class="pill">ChatGPT</span>
+        <span class="pill">Claude</span>
+        <span class="pill">Gemini</span>
+        <span class="pill">Perplexity</span>
+        <span class="pill">Copilot</span>
+        <span class="pill">NotebookLM</span>
+      </div>
+      <button class="btn-primary" onclick="goTo('s-form')">Empezar →</button>
+    </div>
+  </div>
+
+  <!-- ══ FORM ══ -->
+  <div class="screen" id="s-form">
+    <div class="content">
+      <div class="sz-eyebrow">Paso 1 de 2</div>
+      <div class="screen-heading">Tus<br>Datos</div>
+      <div class="screen-sub">Para participar y reclamar tu sticker</div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="f-nombre" placeholder="Tu nombre" autocomplete="given-name" inputmode="text">
+      </div>
+      <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" id="f-apellido" placeholder="Tu apellido" autocomplete="family-name" inputmode="text">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="f-email" placeholder="tu@email.com" autocomplete="email" inputmode="email">
+      </div>
+      <button class="btn-primary" onclick="validateForm()">Continuar →</button>
+      <p class="error-msg" id="form-error">Completá todos los campos correctamente</p>
+    </div>
+  </div>
+
+  <!-- ══ INSTAGRAM ══ -->
+  <div class="screen" id="s-instagram">
+    <div class="content">
+      <div class="sz-eyebrow">Paso 2 de 2</div>
+      <div class="screen-heading">Seguinos<br>en Insta</div>
+      <div class="screen-sub">Para activar el juego, seguinos primero</div>
+      <div class="insta-card">
+        <div class="insta-icon-wrap">📱</div>
+        <div class="insta-handle">@somoszeta</div>
+        <div class="insta-note">Tocá el botón, seguinos<br>y volvé para empezar a jugar</div>
+      </div>
+      <button class="btn-primary" onclick="openInstagram()">Ir a Instagram →</button>
+      <button class="btn-secondary" onclick="startQuiz()">Ya los sigo — ¡Jugar! ✓</button>
+    </div>
+  </div>
+
+  <!-- ══ QUIZ ══ -->
+  <div class="screen" id="s-quiz">
+    <div class="content">
+      <div class="q-meta">
+        <div class="q-counter" id="q-counter">PREGUNTA 1 DE 8</div>
+        <img src="https://i.ibb.co/s99fw0Fn/Somos-Zeta-Exportar-Mesa-de-trabajo-1-copia-55.png" style="height: 50px; opacity: 0.7; width: 50px" alt="SZ">
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="q-progress" style="width:0%"></div></div>
+      <div class="q-text" id="q-text">¿Cómo empezás un proyecto nuevo?</div>
+      <div class="options-list" id="q-options"></div>
+    </div>
+  </div>
+
+  <!-- ══ LOADING ══ -->
+  <div class="screen" id="s-loading">
+    <div class="content" style="text-align:center;">
+      <div class="loading-z">Z</div>
+      <div class="loading-label">Analizando</div>
+      <div class="loading-title">Tu perfil<br>digital</div>
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- ══ RESULT ══ -->
+  <div class="screen" id="s-result">
+    <div class="content">
+      <div class="result-eyebrow">Tu herramienta de IA es</div>
+      <img class="result-sticker" id="r-sticker" src="https://i.ibb.co/Nn2Pn5YJ/Stickers-exportar-Mesa-de-trabajo-1-copia-25.png" alt="">
+      <div class="result-tool" id="r-tool">ChatGPT</div>
+      <div class="result-nick" id="r-nick">El Todoterreno</div>
+      <div class="divider"></div>
+      <div class="result-desc" id="r-desc">Descripción del perfil...</div>
+      <button class="btn-primary" onclick="goTo('s-wheel')">Girar la ruleta →</button>
+    </div>
+  </div>
+
+  <!-- ══ WHEEL ══ -->
+  <div class="screen" id="s-wheel">
+    <div class="content" style="text-align:center;">
+      <div class="sz-eyebrow">¿Ganaste el premio extra?</div>
+      <div class="wheel-title">Girá y descubrí</div>
+      <div class="wheel-wrap">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheel" width="320" height="320" style="width: 420px"></canvas>
+      </div>
+      <button class="spin-btn" id="spin-btn" onclick="spinWheel()">Girar 🎰</button>
+    </div>
+  </div>
+
+  <!-- ══ WIN EXTRA ══ -->
+  <div class="screen" id="s-win">
+    <div class="content" style="text-align:center;">
+      <img class="win-sticker" id="w-sticker" src="https://i.ibb.co/35LTHqTh/Stickers-exportar-Mesa-de-trabajo-1.png" alt="">
+      <div class="win-title gold">¡Ganaste<br>el Premio!</div>
+      <div class="claim-card gold">
+        <div class="claim-name" id="w-name" style="color:#FFD700">¡Felicitaciones!</div>
+        <div class="claim-meta" id="w-tool-win">Perfil: ChatGPT</div>
+      </div>
+      <div class="win-sub">
+        Mostrá esta pantalla en el stand de<br>
+        <strong style="color:var(--lilac)">Somos Zeta</strong> para reclamar tu premio.<br>
+        <span style="font-size:12px;margin-top:6px;display:block;color:var(--fg-dim)">+ tu sticker de perfil te espera en el stand</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STICKER ONLY ══ -->
+  <div class="screen" id="s-sticker">
+    <div class="content" style="text-align:center;">
+      <img class="win-sticker" id="sk-sticker" src="https://i.ibb.co/35LTHqTh/Stickers-exportar-Mesa-de-trabajo-1.png" alt="">
+      <div class="win-title purple">¡Tu sticker<br>te espera!</div>
+      <div class="claim-card violet">
+        <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lilac-dim);margin-bottom:6px">Tu perfil digital</div>
+        <div class="claim-name" id="sk-tool" style="color:var(--lilac)">ChatGPT</div>
+        <div class="claim-meta" id="sk-nick">El Todoterreno</div>
+      </div>
+      <div class="win-sub">
+        Pasá por el stand de <strong style="color:var(--lilac)">Somos Zeta</strong><br>
+        y retirá el sticker de tu perfil IA.<br>
+        <span style="font-size:12px;margin-top:6px;display:block;color:var(--fg-dim)">¡Gracias por jugar!</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="brand-footer">Somos Zeta Digital Advice · somos-zeta.com</div>
+
+<script>
+/* ═══════════════════════════ FLOATING Z BACKGROUND ═══════════════════════════ */
+(function() {
+  const canvas = document.getElementById('circuit-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, zetas;
+
+  const COLORS = ['#6B2E9E','#B89ED9','#1E8FB5','#D946A8','#8B3ECE'];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    if (!zetas) buildZetas();
+  }
+
+  function buildZetas() {
+    zetas = Array.from({ length: 55 }, () => spawnZ(true));
+  }
+
+  function spawnZ(randomY) {
+    const size = 8 + Math.random() * 28;
+    const angle = (Math.random() - 0.5) * Math.PI * 0.9; // chaotic direction
+    const spd   = 0.3 + Math.random() * 1.1;
+    return {
+      x:     Math.random() * (W || window.innerWidth),
+      y:     randomY ? Math.random() * (H || window.innerHeight) : (H || window.innerHeight) + 40,
+      size,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      alpha: 0.05 + Math.random() * 0.13,
+      vx:    Math.sin(angle) * spd * 0.6,
+      vy:    -(Math.abs(Math.cos(angle)) * spd + 0.2),
+      rot:   Math.random() * Math.PI * 2,
+      rotV:  (Math.random() - 0.5) * 0.06,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.02 + Math.random() * 0.04,
+    };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.textBaseline = 'middle';
+    ctx.textAlign    = 'center';
+
+    zetas.forEach(z => {
+      z.wobble += z.wobbleSpeed;
+      z.x   += z.vx + Math.sin(z.wobble) * 0.5;
+      z.y   += z.vy;
+      z.rot += z.rotV;
+
+      // Reset if off-screen
+      if (z.y < -40 || z.x < -60 || z.x > W + 60) {
+        Object.assign(z, spawnZ(false));
+        z.x = Math.random() * W;
+      }
+
+      ctx.save();
+      ctx.translate(z.x, z.y);
+      ctx.rotate(z.rot);
+      ctx.globalAlpha = z.alpha;
+      ctx.fillStyle   = z.color;
+      ctx.font        = `900 ${z.size}px 'Montserrat', sans-serif`;
+      ctx.fillText('Z', 0, 0);
+      ctx.restore();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+})();
+
+/* ═══════════════════════════ CONFIG ═══════════════════════════ */
+const CONFIG = {
+  INSTAGRAM_URL:   'https://www.instagram.com/somoszeta_da',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby17ITioRvQ0k3HiU1VJwDA4jzpd8OAy9mbbXBkgB6xDoXs_WBrFIVaYW8YZ9yApOp1/exec',
+  WIN_PROBABILITY: 0.30,
+};
+
+/* ═══════════════════════════ STATE ═══════════════════════════ */
+const state = { nombre:'', apellido:'', email:'', qIndex:0, scores:{}, result:null, won:false };
+
+/* ═══════════════════════════ QUESTIONS ═══════════════════════════ */
+const QUESTIONS = [
+  { text:"¿Cómo empezás un proyecto nuevo?", opts:[
+    {t:"Con ideas desordenadas, después las ordeno",    s:{claude:1,notebooklm:1}},
+    {t:"Busco qué hicieron otros antes",               s:{perplexity:2}},
+    {t:"Hablo con el equipo primero",                  s:{copilot:1,gemini:1}},
+    {t:"Armo un plan de tareas concreto de entrada",   s:{chatgpt:2}},
+  ]},
+  { text:"Te mandan un informe de 40 páginas. ¿Qué hacés?", opts:[
+    {t:"Lo leo entero, necesito todo el contexto",      s:{notebooklm:2,claude:1}},
+    {t:"Busco el resumen ejecutivo y voy a lo clave",   s:{chatgpt:1,copilot:1}},
+    {t:"Le hago preguntas concretas con IA",            s:{gemini:1,perplexity:1}},
+    {t:"Lo convierto en bullets de acción y listo",     s:{chatgpt:1,copilot:1}},
+  ]},
+  { text:"Tu jefe pide un informe para mañana. ¿Primer movimiento?", opts:[
+    {t:"Pienso bien qué quiero decir antes de escribir",s:{claude:2}},
+    {t:"Busco plantillas y referencias online",         s:{perplexity:1,copilot:1}},
+    {t:"Arranco con IA desde el principio",             s:{chatgpt:1,gemini:1}},
+    {t:"Reúno y analizo todos los datos primero",       s:{notebooklm:2}},
+  ]},
+  { text:"¿Cómo describís tu estilo de trabajo?", opts:[
+    {t:"Metódico y muy detallista",                     s:{notebooklm:1,claude:1}},
+    {t:"Rápido y adaptable a lo que aparece",           s:{chatgpt:1,copilot:1}},
+    {t:"Colaborativo y siempre conectado al equipo",    s:{gemini:2}},
+    {t:"Curioso, investigo antes de actuar",            s:{perplexity:2}},
+  ]},
+  { text:"¿Cuál sería tu superpoder ideal?", opts:[
+    {t:"Saber todo lo que pasó y verificarlo",          s:{perplexity:1,notebooklm:1}},
+    {t:"Generar contenido perfecto en segundos",        s:{chatgpt:1,gemini:1}},
+    {t:"Integrarme con todas las apps del mundo",       s:{gemini:1,copilot:1}},
+    {t:"Pensar más profundo que nadie",                 s:{claude:2}},
+  ]},
+  { text:"En una reunión, ¿qué herramienta usarías?", opts:[
+    {t:"Un chat donde puedo preguntar cualquier cosa",  s:{chatgpt:1,claude:1}},
+    {t:"Notas y resúmenes automáticos de la reunión",   s:{notebooklm:2}},
+    {t:"Búsqueda en tiempo real para verificar datos",  s:{perplexity:2}},
+    {t:"Lo que ya tengo integrado a Teams o Meet",      s:{copilot:2}},
+  ]},
+  { text:"¿Cómo preferís aprender algo nuevo?", opts:[
+    {t:"Leyendo documentos completos, en profundidad",  s:{notebooklm:1,claude:1}},
+    {t:"Haciendo preguntas y conversando con alguien",  s:{chatgpt:1,claude:1}},
+    {t:"Buscando ejemplos y casos reales",              s:{perplexity:2}},
+    {t:"Probando herramientas mientras aprendo",        s:{gemini:1,copilot:1}},
+  ]},
+  { text:"En el trabajo, ¿qué valorás más?", opts:[
+    {t:"La precisión y la calidad del resultado",       s:{claude:2}},
+    {t:"La velocidad y la eficiencia",                  s:{chatgpt:1,copilot:1}},
+    {t:"La integración y el flujo de trabajo fluido",   s:{gemini:2}},
+    {t:"El conocimiento profundo y el contexto",        s:{perplexity:1,notebooklm:1}},
+  ]},
+];
+
+/* ═══════════════════════════ PROFILES ═══════════════════════════ */
+const PROFILES = {
+  chatgpt:    {name:'ChatGPT',     nick:'El Todoterreno', color:'#19c37d', sticker:'https://i.ibb.co/Nn2Pn5YJ/Stickers-exportar-Mesa-de-trabajo-1-copia-25.png',          aiLogo:'assets/ai-logos/chatgpt.png',    aiBg:'#ffffff', desc:'Vas directo al resultado. Adaptable, rápido y siempre listo para el siguiente desafío. Tu valor está en la ejecución: donde otros piensan, vos ya terminaste.'},
+  claude:     {name:'Claude',      nick:'El Pensador',    color:'#D97757', sticker:'https://i.ibb.co/hRCmWx1V/Stickers-exportar-Mesa-de-trabajo-1-copia-24.png',        aiLogo:'assets/ai-logos/claude.png',     aiBg:'#CC785C', desc:'No te conformás con la primera respuesta. Analizás en profundidad, cuidás cada detalle y buscás la que realmente tiene sentido. Tu valor está en la calidad, no en la velocidad.'},
+  gemini:     {name:'Gemini',      nick:'El Conector',    color:'#4285F4', sticker:'https://i.ibb.co/FbRPw6Kc/Stickers-exportar-Mesa-de-trabajo-1-copia-23.png',        aiLogo:'assets/ai-logos/gemini.png',     aiBg:'#ffffff', desc:'Sos el que une los puntos. Te movés entre plataformas, equipos y contextos con naturalidad. Tu fortaleza es la integración y la visión de conjunto.'},
+  perplexity: {name:'Perplexity',  nick:'El Investigador',color:'#20b2aa', sticker:'https://i.ibb.co/Pz9JQ1zD/Stickers-exportar-Mesa-de-trabajo-1-copia-20.png', aiLogo:'assets/ai-logos/perplexity.png', aiBg:'#1C9A8E', desc:'No das nada por sentado. Antes de actuar, investigás. Antes de hablar, verificás. Tu superpoder es el conocimiento con fuentes reales.'},
+  copilot:    {name:'Copilot',     nick:'El Colaborador', color:'#0078d4', sticker:'https://i.ibb.co/Vpk6G1Sm/Stickers-exportar-Mesa-de-trabajo-1-copia-19.png',      aiLogo:'assets/ai-logos/copilot.jpg',    aiBg:'#ffffff', desc:'Trabajás mejor en equipo. Sabés potenciar a los demás y encajás perfectamente en los flujos de trabajo existentes. Tu valor está en hacer que todo funcione junto.'},
+  notebooklm: {name:'NotebookLM',  nick:'El Archivista',  color:'#fa7b17', sticker:'https://i.ibb.co/8SLxdHr/Stickers-exportar-Mesa-de-trabajo-1-copia-17.png',             aiLogo:'assets/ai-logos/grok.png',       aiBg:'#000000', desc:'Sos el guardián del conocimiento. Procesás información compleja, estructurás lo que otros no entienden y convertís el caos documental en claridad.'},
+};
+
+/* ═══════════════════════════ NAVIGATION ═══════════════════════════ */
+function goTo(id) {
+  const cur = document.querySelector('.screen.active');
+  if (cur) { cur.classList.remove('active'); cur.classList.add('exit'); setTimeout(()=>cur.classList.remove('exit'),420); }
+  setTimeout(() => {
+    const next = document.getElementById(id);
+    if (next) { next.classList.add('active'); next.scrollTop = 0; }
+  }, 210);
+}
+
+/* ═══════════════════════════ FORM ═══════════════════════════ */
+function validateForm() {
+  const nombre   = document.getElementById('f-nombre').value.trim();
+  const apellido = document.getElementById('f-apellido').value.trim();
+  const email    = document.getElementById('f-email').value.trim();
+  const err      = document.getElementById('form-error');
+  if (!nombre || !apellido || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.style.display='block'; return; }
+  err.style.display='none';
+  state.nombre=nombre; state.apellido=apellido; state.email=email;
+  goTo('s-instagram');
+}
+
+/* ═══════════════════════════ INSTAGRAM ═══════════════════════════ */
+function openInstagram() { window.open(CONFIG.INSTAGRAM_URL,'_blank'); }
+function startQuiz() { resetScores(); renderQuestion(0); goTo('s-quiz'); }
+
+/* ═══════════════════════════ QUIZ ═══════════════════════════ */
+function resetScores() {
+  state.qIndex = 0;
+  state.scores = {chatgpt:0,claude:0,gemini:0,perplexity:0,copilot:0,notebooklm:0};
+}
+
+function renderQuestion(idx) {
+  const q = QUESTIONS[idx];
+  const total = QUESTIONS.length;
+  document.getElementById('q-counter').textContent = `PREGUNTA ${idx+1} DE ${total}`;
+  document.getElementById('q-progress').style.width = `${(idx/total)*100}%`;
+
+  const qText = document.getElementById('q-text');
+  qText.style.animation = 'none';
+  qText.offsetHeight; // reflow
+  qText.style.animation = '';
+  qText.textContent = q.text;
+
+  const list = document.getElementById('q-options');
+  list.innerHTML = '';
+  ['A','B','C','D'].forEach((letter,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-letter">${letter}</span><span>${q.opts[i].t}</span>`;
+    btn.addEventListener('click', ()=>pickOption(btn, q.opts[i].s));
+    list.appendChild(btn);
+  });
+}
+
+function pickOption(btn, scores) {
+  document.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  btn.classList.add('selected');
+  for (const [k,v] of Object.entries(scores)) state.scores[k]=(state.scores[k]||0)+v;
+  state.qIndex++;
+  if (state.qIndex >= QUESTIONS.length) { goTo('s-loading'); setTimeout(finishQuiz, 2400); }
+  else setTimeout(()=>renderQuestion(state.qIndex), 350);
+}
+
+/* ═══════════════════════════ RESULT ═══════════════════════════ */
+function finishQuiz() {
+  let best='chatgpt', max=-1;
+  for (const [k,v] of Object.entries(state.scores)) if(v>max){max=v;best=k;}
+  state.result = best;
+  state.won = Math.random() < CONFIG.WIN_PROBABILITY;
+  const p = PROFILES[best];
+
+  const stickerEl = document.getElementById('r-sticker');
+  stickerEl.src = p.sticker;
+  stickerEl.style.animation = 'none';
+  stickerEl.offsetHeight;
+  stickerEl.style.animation = '';
+
+  document.getElementById('r-tool').textContent = p.name;
+  document.getElementById('r-tool').style.color  = p.color;
+  document.getElementById('r-nick').textContent  = p.nick;
+  document.getElementById('r-desc').textContent  = p.desc;
+
+
+  submitData({nombre:state.nombre,apellido:state.apellido,email:state.email,
+    resultado:p.name,perfil:p.nick,premio_extra:state.won,timestamp:new Date().toISOString()});
+  goTo('s-result');
+}
+
+async function submitData(data) {
+  if (!CONFIG.APPS_SCRIPT_URL.includes('TU_URL')) {
+    try { await fetch(CONFIG.APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); } catch(e){}
+  } else { console.log('[SZ] Datos:', data); }
+}
+
+/* ═══════════════════════════ WHEEL ═══════════════════════════ */
+const SEGS = [
+  {label:'🎁 PREMIO',  color:'#FFD700', win:true },
+  {label:'STICKER ⭐', color:'#3D1F60', win:false},
+  {label:'STICKER ⭐', color:'#1A3A4A', win:false},
+  {label:'🎁 PREMIO',  color:'#D946A8', win:true },
+  {label:'STICKER ⭐', color:'#4A1A70', win:false},
+  {label:'STICKER ⭐', color:'#0E3050', win:false},
+  {label:'🎁 PREMIO',  color:'#FFD700', win:true },
+  {label:'STICKER ⭐', color:'#3D1F60', win:false},
+];
+let wheelAngle=0, isSpinning=false;
+
+function drawWheel(angle) {
+  const canvas=document.getElementById('wheel');
+  const ctx=canvas.getContext('2d');
+  const cx=canvas.width/2, cy=canvas.height/2, r=cx-3;
+  const n=SEGS.length, arc=(2*Math.PI)/n;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  SEGS.forEach((seg,i)=>{
+    const start=angle+i*arc, end=start+arc;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath();
+    ctx.fillStyle=seg.color; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(start+arc/2);
+    ctx.textAlign='right'; ctx.fillStyle='#fff';
+    ctx.font=`bold 9px 'Montserrat',sans-serif`;
+    ctx.shadowColor='rgba(0,0,0,0.7)'; ctx.shadowBlur=4;
+    ctx.fillText(seg.label, r-10, 4); ctx.restore();
+  });
+  // Outer ring
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.strokeStyle='rgba(107,46,158,0.6)'; ctx.lineWidth=3; ctx.stroke();
+  // Center
+  ctx.beginPath(); ctx.arc(cx,cy,22,0,2*Math.PI);
+  ctx.fillStyle='#0E0612'; ctx.fill();
+  ctx.strokeStyle='#6B2E9E'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#B89ED9'; ctx.font=`900 20px 'Montserrat',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.shadowColor='transparent';
+  ctx.fillText('Z',cx,cy+1);
+}
+
+function spinWheel() {
+  if(isSpinning) return;
+  isSpinning=true; document.getElementById('spin-btn').disabled=true;
+  const n=SEGS.length, arc=(2*Math.PI)/n;
+  const pool=SEGS.map((s,i)=>({...s,i})).filter(s=>s.win===state.won);
+  const target=pool[Math.floor(Math.random()*pool.length)];
+  const targetFinal=-Math.PI/2-(target.i+0.5)*arc;
+  const normTarget=((targetFinal%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  const normStart=((wheelAngle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  let delta=normTarget-normStart; if(delta<0) delta+=2*Math.PI;
+  const jitter=(Math.random()-0.5)*arc*0.5;
+  const totalDelta=(6+Math.floor(Math.random()*4))*2*Math.PI+delta+jitter;
+  const startAngle=wheelAngle, endAngle=startAngle+totalDelta;
+  const duration=4600, startTime=performance.now();
+  function easeOut(t){return 1-Math.pow(1-t,4);}
+  function animate(now){
+    const elapsed=now-startTime, progress=Math.min(elapsed/duration,1);
+    wheelAngle=startAngle+easeOut(progress)*totalDelta;
+    drawWheel(wheelAngle);
+    if(progress<1) requestAnimationFrame(animate);
+    else { wheelAngle=endAngle; isSpinning=false; setTimeout(showWheelResult,700); }
+  }
+  requestAnimationFrame(animate);
+}
+
+function showWheelResult() {
+  const p=PROFILES[state.result];
+  if(state.won) {
+    document.getElementById('w-sticker').src=p.sticker;
+    document.getElementById('w-name').textContent=`¡Felicitaciones, ${state.nombre}!`;
+    document.getElementById('w-tool-win').textContent=`Tu perfil: ${p.name} — ${p.nick}`;
+    goTo('s-win'); launchConfetti();
+  } else {
+    document.getElementById('sk-sticker').src=p.sticker;
+    document.getElementById('sk-tool').textContent=p.name;
+    document.getElementById('sk-tool').style.color=p.color;
+    document.getElementById('sk-nick').textContent=p.nick;
+    goTo('s-sticker');
+  }
+}
+
+/* ═══════════════════════════ CONFETTI ═══════════════════════════ */
+function launchConfetti() {
+  const canvas=document.getElementById('confetti');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const colors=['#6B2E9E','#D946A8','#FFD700','#1E8FB5','#B89ED9','#ffffff'];
+  const pieces=Array.from({length:130},()=>({
+    x:Math.random()*canvas.width, y:-10-Math.random()*200,
+    w:5+Math.random()*7, h:7+Math.random()*9,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    vy:2+Math.random()*4, vx:(Math.random()-0.5)*3,
+    rot:Math.random()*360, vrot:(Math.random()-0.5)*8, op:1,
+  }));
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height); let alive=false;
+    pieces.forEach(p=>{
+      if(p.y>canvas.height+20) return; alive=true;
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.vrot;
+      if(p.y>canvas.height*0.7) p.op=Math.max(0,p.op-0.022);
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.globalAlpha=p.op; ctx.fillStyle=p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    frame++; if(alive&&frame<300) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ═══════════════════════════ INIT ═══════════════════════════ */
+window.addEventListener('load', ()=>drawWheel(0));
+</script>
+</body>
+</html>
